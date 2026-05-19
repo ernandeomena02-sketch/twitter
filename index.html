@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>XClone</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#000;
+    color:white;
+}
+
+.hidden{
+    display:none !important;
+}
+
+/* LOGIN */
+
+#authScreen{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.auth-box{
+    width:350px;
+    background:#16181c;
+    padding:30px;
+    border-radius:20px;
+}
+
+.auth-box h1{
+    text-align:center;
+    margin-bottom:25px;
+    color:#1d9bf0;
+}
+
+.auth-box input{
+    width:100%;
+    padding:14px;
+    margin-bottom:15px;
+    border:none;
+    border-radius:10px;
+    background:#202327;
+    color:white;
+}
+
+.auth-box button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#1d9bf0;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.switch{
+    text-align:center;
+    margin-top:15px;
+    cursor:pointer;
+    color:#1d9bf0;
+}
+
+/* APP */
+
+#app{
+    display:flex;
+    min-height:100vh;
+}
+
+.sidebar{
+    width:250px;
+    padding:20px;
+    border-right:1px solid #2f3336;
+}
+
+.logo{
+    font-size:30px;
+    font-weight:bold;
+    color:#1d9bf0;
+    margin-bottom:30px;
+}
+
+.menu button{
+    width:100%;
+    margin-bottom:10px;
+    padding:12px;
+    border:none;
+    border-radius:30px;
+    background:#1d9bf0;
+    color:white;
+    cursor:pointer;
+}
+
+.feed{
+    flex:1;
+    max-width:700px;
+    margin:auto;
+    border-right:1px solid #2f3336;
+    border-left:1px solid #2f3336;
+}
+
+.topbar{
+    padding:20px;
+    border-bottom:1px solid #2f3336;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.post-box{
+    padding:20px;
+    border-bottom:1px solid #2f3336;
+}
+
+.post-box textarea{
+    width:100%;
+    height:100px;
+    background:#16181c;
+    color:white;
+    border:none;
+    border-radius:15px;
+    padding:15px;
+    resize:none;
+}
+
+.post-box button{
+    margin-top:10px;
+    padding:10px 20px;
+    border:none;
+    border-radius:30px;
+    background:#1d9bf0;
+    color:white;
+    cursor:pointer;
+}
+
+.post{
+    padding:20px;
+    border-bottom:1px solid #2f3336;
+}
+
+.post-user{
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.post-date{
+    color:gray;
+    font-size:12px;
+    margin-bottom:10px;
+}
+
+.post-content{
+    line-height:1.5;
+}
+
+.right{
+    width:300px;
+    padding:20px;
+}
+
+.card{
+    background:#16181c;
+    padding:20px;
+    border-radius:20px;
+}
+
+@media(max-width:900px){
+    .right{
+        display:none;
+    }
+
+    .sidebar{
+        width:80px;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="authScreen">
+
+    <div class="auth-box">
+        <h1>XClone</h1>
+
+        <input type="text" id="username" placeholder="Usuário">
+        <input type="password" id="password" placeholder="Senha">
+
+        <button onclick="handleAuth()">Entrar</button>
+
+        <div class="switch" onclick="toggleMode()">
+            Criar conta
+        </div>
+    </div>
+
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+    <div class="sidebar">
+        <div class="logo">X</div>
+
+        <div class="menu">
+            <button onclick="logout()">Sair</button>
+        </div>
+    </div>
+
+    <div class="feed">
+
+        <div class="topbar">
+            Página Inicial
+        </div>
+
+        <div class="post-box">
+            <textarea id="postContent" placeholder="O que está acontecendo?"></textarea>
+            <button onclick="createPost()">Postar</button>
+        </div>
+
+        <div id="posts"></div>
+
+    </div>
+
+    <div class="right">
+        <div class="card">
+            <h3>Usuário</h3>
+            <p id="currentUser"></p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbyErFAYYYJgJBHrSNT24w5N94xMZjsXe-eUP4XSOZ9qq5nuHApalkYGUkTEjqbIg5qRxA/exec";
+
+let isLogin = true;
+let currentUser = localStorage.getItem("user");
+
+function toggleMode(){
+    isLogin = !isLogin;
+
+    document.querySelector(".switch").innerText =
+        isLogin ? "Criar conta" : "Já tenho conta";
+
+    document.querySelector(".auth-box button").innerText =
+        isLogin ? "Entrar" : "Cadastrar";
+}
+
+async function handleAuth(){
+
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if(!username || !password){
+        alert("Preencha tudo");
+        return;
+    }
+
+    const action = isLogin ? "login" : "register";
+
+    const res = await fetch(API_URL,{
+        method:"POST",
+        body:JSON.stringify({
+            action,
+            username,
+            password
+        })
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+
+        localStorage.setItem("user", username);
+        currentUser = username;
+
+        showApp();
+
+    }else{
+        alert(data.message);
+    }
+}
+
+function showApp(){
+
+    document.getElementById("authScreen").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+
+    document.getElementById("currentUser").innerText = currentUser;
+
+    loadPosts();
+}
+
+function logout(){
+
+    localStorage.removeItem("user");
+    location.reload();
+}
+
+async function createPost(){
+
+    const content = document.getElementById("postContent").value.trim();
+
+    if(!content){
+        return;
+    }
+
+    await fetch(API_URL,{
+        method:"POST",
+        body:JSON.stringify({
+            action:"createPost",
+            username:currentUser,
+            content
+        })
+    });
+
+    document.getElementById("postContent").value = "";
+
+    loadPosts();
+}
+
+async function loadPosts(){
+
+    const res = await fetch(API_URL,{
+        method:"POST",
+        body:JSON.stringify({
+            action:"getPosts"
+        })
+    });
+
+    const posts = await res.json();
+
+    const postsDiv = document.getElementById("posts");
+
+    postsDiv.innerHTML = "";
+
+    posts.reverse().forEach(post => {
+
+        postsDiv.innerHTML += `
+            <div class="post">
+                <div class="post-user">@${post.username}</div>
+                <div class="post-date">${post.date}</div>
+                <div class="post-content">${post.content}</div>
+            </div>
+        `;
+    });
+}
+
+if(currentUser){
+    showApp();
+}
+
+</script>
+
+</body>
+</html>
